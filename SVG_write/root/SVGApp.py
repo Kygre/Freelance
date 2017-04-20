@@ -6,11 +6,13 @@ Created on Apr 12, 2017
 
 from enum import Enum
 import os
+import logging
 
 from tkinter import *
 from tkinter import colorchooser as cd
 from tkinter import filedialog as fd
 from pprint import pprint
+from _stat import filemode
 
 class Corners(Enum):
     SQUARE = 1
@@ -28,31 +30,43 @@ def get_text(arg):
     return input("%s?\n" % arg)
 
 def get_Corners():
-    return Corners( int(input('Corners?\n1 - Square\n2 - Rounded\n3 - Circle\n')))
-
+    input_arg = input('Corners?\n1 - Square\n2 - Rounded\n3 - Circle\n')
+    if input_arg:
+        return Corners(int(input_arg))
+    else:
+        print("Default corner is %s" % Corners.SQUARE)
+        return Corners.SQUARE
 def get_boolean(arg):
     arg = arg.lower()
     return True if (arg == 'yes' or 'y') else False
-    
-        
     
 def read_input():
     
     options = {}
     directory = ''
+    color_args = ['Background', 'Text']
+    string_args = ['Name of Organization', 'College Name']
+    concat = 'Concatenate users yes -> y | no -> n\n'
+    accepted_formats = {'svg', 'png'}
+    
     
     while(not os.path.isdir(directory)):
         directory = fd.askdirectory()
         if directory:
-            print("Using %s" % directory)
+            logging.info("Directory %s" % directory)            
+    
     
     for root, dirs, files in os.walk(directory):
         if root == directory:
-            options['directory'] = [ file for file in files]
+            
+            all_files = [ f for f in files if os.path.splitext(os.path.join(root,f)) in accepted_formats]
     
-    color_args = ['Background', 'Text']
-    string_args = ['Name of Organization', 'College Name']
-    concat = 'Concatenate users yes -> y | no -> n'
+    if not options['files']:
+        error_msg = 'No files found in %s -- Program Will Exit' % directory
+        logging.error(error_msg)
+        raise(Exception(error_msg))
+    
+        
     
     for string_arg in string_args:
         options[string_arg] = get_text(string_arg)
@@ -66,12 +80,14 @@ def read_input():
         try:
             corners = get_Corners()
         except:
-            print("Failed to parse corner option\nDefault = " + Corners.SQUARE)
-            
+            pass
     options['concat'] = get_boolean(input(concat))
-    
     pprint(options)
     
+    return options
 if __name__ == '__main__':
     
-    read_input()
+    logging.basicConfig(filename='logging.log', filemode = 'w', level = logging.DEBUG)
+    options = read_input()
+    
+    
