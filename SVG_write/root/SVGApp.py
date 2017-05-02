@@ -12,6 +12,10 @@ from tkinter import *
 from tkinter import colorchooser as cd
 from tkinter import filedialog as fd
 
+from svgwrite import text, Drawing, cm, mm
+from svgwrite.shapes import Rect, Line
+import svgwrite
+from fileinput import filename
 
 class Corners(Enum):
     SQUARE = 1
@@ -47,6 +51,9 @@ def get_boolean(arg):
         logging.info("Concat user input option empty. Defaulting to false")
         return False
     
+def get_insignia():
+    form_string = "Choose insignia image file"
+    return fd.askopenfilename(title = form_string)
 
 def get_Files(directory = ''):
     
@@ -77,6 +84,17 @@ def get_Files(directory = ''):
     return class_list
 
 
+def draw(output_file, options):
+    size_x, size_y = options['dimensions']
+    dwg = Drawing(filename= output_file, size = (size_x, size_y))
+    
+    #background
+    dwg.add(Rect(insert= (0,0), size=  (size_x,size_y), fill = options['Background'][1]))
+    # border
+    dwg.add(Rect(insert = (10,10) , size = ('97%','97%'), stroke_width = options['Border'], stroke= 'black', fill = 'white'))
+    
+    dwg.save()
+
 def read_input():
     
     options = {}
@@ -91,6 +109,7 @@ def read_input():
         if directory:
             logging.info("Directory %s" % directory)            
     
+    options['directory'] = directory
     
     options['files'] = get_Files(directory)
     
@@ -120,7 +139,7 @@ def read_input():
     options['concat'] = get_boolean(input(concat))
     
     try:
-        options['Border'] = int(options['Border Size'])
+        options['Border'] = int(input("Border in pixels\n"))
     except:
         logging.error("Failed to parse border size\nDefault to zero pixels")
         options['Border'] = 0
@@ -134,6 +153,11 @@ def read_input():
         options['dimensions'] = (800, 600)
     
     try:
+        options['year'] = input("Year\n")
+    except:
+        logging.error("Failed to parse year")
+        logging.info("Defaulting to current year")
+    try:
         options['separation'] = input("Path to Seperation image\n")
         
         for quote in ['\'', '\"']:
@@ -145,6 +169,11 @@ def read_input():
         logging.error("Failed to parse Image height and width") 
         options['Separation'] = "Solid_white.svg.png"    
        
+    try:
+        options['insignia'] = get_insignia()
+    except:
+        logging.error("Failed to choose insignia image")
+        options['insignia'] = 'Insignia.png'
     
     return options
 
@@ -167,7 +196,6 @@ if __name__ == '__main__':
     
     # sort files into class buckets -- Check
     pprint(options)
+    out_file = 'testing.svg'
     # draw in order w/ border 
-    
-    # save svg
-    
+    draw(out_file, options)
